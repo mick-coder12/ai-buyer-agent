@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Purchasing Agent</title>
+<style>
+  :root {
+    --bg: #f4f5f7; --panel: #ffffff; --border: #dfe3e8; --text: #1f2430; --muted: #6b7280;
+    --accent: #2f6feb; --green: #1a7f37; --amber: #b45309; --red: #c93030; --chip-bg: #eef1f6;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+         background: var(--bg); color: var(--text); }
+  header { padding: 18px 24px; background: #14161f; color: #fff; }
+  header h1 { margin: 0; font-size: 18px; }
+  header p { margin: 2px 0 0; color: #9aa4b2; font-size: 13px; }
+  .layout { display: grid; grid-template-columns: 320px 1fr; gap: 16px; padding: 16px; align-items: start; }
+  .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px; }
+  .situation-item { padding: 10px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 8px; cursor: pointer; }
+  .situation-item:hover { border-color: var(--accent); }
+  .situation-item.active { border-color: var(--accent); background: #eef3ff; }
+  .situation-item .title { font-size: 13px; font-weight: 600; }
+  .situation-item .meta { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 999px; background: var(--chip-bg); color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .03em; }
+  .badge.new { background: #eef1f6; color: #4b5563; }
+  .badge.resolved, .badge.resolved_with_adjustment { background: #e6f4ea; color: var(--green); }
+  .badge.pending_approval { background: #fef3e0; color: var(--amber); }
+  .badge.escalated { background: #fdeaea; color: var(--red); }
+  .badge.rejected { background: #eee; color: #888; }
+  h2 { font-size: 16px; margin: 0 0 4px; }
+  .desc { color: var(--muted); font-size: 13px; margin-bottom: 12px; }
+  button { font: inherit; border: none; border-radius: 7px; padding: 8px 14px; cursor: pointer; font-size: 13px; font-weight: 600; }
+  .btn-primary { background: var(--accent); color: #fff; }
+  .btn-approve { background: var(--green); color: #fff; margin-right: 6px; }
+  .btn-reject { background: #fff; color: var(--red); border: 1px solid var(--red); }
+  .decision-banner { border-radius: 8px; padding: 12px 14px; margin: 14px 0; font-size: 14px; }
+  .decision-banner.accept, .decision-banner.sufficient_as_is { background: #e6f4ea; border: 1px solid #bfe3c9; }
+  .decision-banner.modify, .decision-banner.sourced_alternate, .decision-banner.recommend_purchase { background: #eef3ff; border: 1px solid #c9d9fb; }
+  .decision-banner.reject { background: #f2f2f2; border: 1px solid #ddd; }
+  .decision-banner.investigate, .decision-banner.escalate { background: #fdeaea; border: 1px solid #f5c6c6; }
+  .decision-banner .label { font-weight: 700; text-transform: capitalize; }
+  ul.factors { list-style: none; margin: 10px 0; padding: 0; }
+  ul.factors li { padding: 8px 0; border-top: 1px solid var(--border); font-size: 13px; }
+  ul.factors li:first-child { border-top: none; }
+  ul.factors li b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); margin-bottom: 2px; }
+  .validation-note { font-size: 13px; padding: 10px; border-radius: 8px; margin-top: 8px; }
+  .validation-note.ok { background: #e6f4ea; }
+  .validation-note.warn { background: #fdeaea; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; }
+  .empty { color: var(--muted); font-size: 13px; padding: 6px 0; }
+  .section-title { font-size: 13px; font-weight: 700; margin: 18px 0 8px; }
+  .trace { margin-top: 14px; }
+  .trace-step { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .trace-step b { color: var(--text); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Purchasing Agent</h1>
+  <p>Investigates a purchasing situation, decides, acts, and validates the result.</p>
+</header>
+
+<div class="layout">
+  <div class="panel" id="situation-list"></div>
+
+  <div>
+    <div class="panel" id="detail"></div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="section-title">Approval queue</div>
+      <div id="approvals"></div>
+    </div>
+
+    <div class="panel" style="margin-top:16px">
+      <div class="section-title">Purchase orders</div>
+      <div id="pos"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let situations = [];
+let selectedId = null;
+
+async function api(path, opts) {
+  const res = await fetch(path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
+
+function statusLabel(s) { return s.replaceAll('_', ' '); }
+
+async function loadSituations() {
+  situations = await api('/api/situations');
+  const el = document.getElementById('situation-list');
+  el.innerHTML = '<div class="section-title">Situations</div>' + situations.map(s => `
+    <div class="situation-item ${s.id === selectedId ? 'active' : ''}" onclick="selectSituation('${s.id}')">
+      <div class="title">${s.title}</div>
+      <div class="meta">${s.sku} &middot; <span class="badge ${s.status}">${statusLabel(s.status)}</span></div>
+    </div>
+  `).join('');
+}
+
+async function selectSituation(id) {
+  selectedId = id;
+  await loadSituations();
+  await renderDetail();
+}
+
+async function renderDetail() {
+  const el = document.getElementById('detail');
+  if (!selectedId) { el.innerHTML = '<div class="empty">Select a situation on the left.</div>'; return; }
+  const s = await api(`/api/situations/${selectedId}`);
+
+  let html = `<h2>${s.title}</h2><div class="desc">${s.description}</div>`;
+  html += `<button class="btn-primary" onclick="runAgent('${s.id}')">Run agent</button>`;
+
+  if (s.audit_log && s.audit_log.length) {
+    const lastDecision = [...s.audit_log].reverse().find(a => a.step === 'reason:decision');
+    if (lastDecision) {
+      const rec = lastDecision.detail;
+      html += `<div class="decision-banner ${rec.decision}">
+        <span class="label">${rec.decision.replaceAll('_',' ')}</span> &mdash; quantity ${rec.quantity},
+        confidence ${rec.confidence}${rec.needs_human_approval ? ' &middot; needs buyer approval' : ' &middot; auto-executed'}
+      </div>`;
+      html += '<ul class="factors">' + rec.factors.map(f => `<li><b>${f.label}</b>${f.detail}</li>`).join('') + '</ul>';
+    }
+    const validation = [...s.audit_log].reverse().find(a => a.step.startsWith('validate:'));
+    if (validation) {
+      const ok = validation.step === 'validate:ok';
+      html += `<div class="validation-note ${ok ? 'ok' : 'warn'}"><b>Validation:</b> ${validation.detail.note}</div>`;
+    }
+    html += '<div class="trace"><div class="section-title">Reasoning trace</div>' +
+      s.audit_log.map(a => `<div class="trace-step"><b>${a.step}</b> &middot; ${a.ts}</div>`).join('') + '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+async function runAgent(id) {
+  await api(`/api/situations/${id}/run`, { method: 'POST' });
+  await loadSituations();
+  await renderDetail();
+  await loadApprovals();
+  await loadPOs();
+}
+
+async function loadApprovals() {
+  const approvals = await api('/api/approvals');
+  const pending = approvals.filter(a => a.status === 'pending');
+  const el = document.getElementById('approvals');
+  if (!pending.length) { el.innerHTML = '<div class="empty">Nothing waiting on a buyer right now.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>Situation</th><th>Proposed</th><th>Qty</th><th>Why</th><th></th></tr></thead><tbody>` +
+    pending.map(a => `<tr>
+      <td>${a.situation_id}</td>
+      <td>${a.proposal.decision.replaceAll('_',' ')}</td>
+      <td>${a.proposal.quantity || '&mdash;'}</td>
+      <td>${(a.proposal.factors[a.proposal.factors.length - 1] || {}).detail || ''}</td>
+      <td>
+        <button class="btn-approve" onclick="decideApproval('${a.id}', true)">Approve</button>
+        <button class="btn-reject" onclick="decideApproval('${a.id}', false)">Reject</button>
+      </td>
+    </tr>`).join('') + '</tbody></table>';
+}
+
+async function decideApproval(id, approve) {
+  await api(`/api/approvals/${id}/${approve ? 'approve' : 'reject'}`, { method: 'POST' });
+  await loadSituations();
+  await renderDetail();
+  await loadApprovals();
+  await loadPOs();
+}
+
+async function loadPOs() {
+  const pos = await api('/api/purchase-orders');
+  const el = document.getElementById('pos');
+  if (!pos.length) { el.innerHTML = '<div class="empty">No purchase orders created yet.</div>'; return; }
+  el.innerHTML = `<table><thead><tr><th>PO</th><th>SKU</th><th>Supplier</th><th>Qty</th><th>Status</th><th>Notes</th></tr></thead><tbody>` +
+    pos.map(p => `<tr><td>${p.id}</td><td>${p.sku}</td><td>${p.supplier_id}</td><td>${p.quantity}</td>
+      <td><span class="badge ${p.status}">${statusLabel(p.status)}</span></td><td>${p.notes || ''}</td></tr>`).join('') + '</tbody></table>';
+}
+
+(async function init() {
+  await loadSituations();
+  await renderDetail();
+  await loadApprovals();
+  await loadPOs();
+})();
+</script>
+</body>
+</html>

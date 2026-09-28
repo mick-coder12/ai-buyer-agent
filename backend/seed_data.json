@@ -1,0 +1,135 @@
+{
+  "products": [
+    {
+      "sku": "SKU-1001",
+      "name": "Insulated Water Bottle 1L",
+      "category": "houseware",
+      "storage_units_per_item": 1.0,
+      "current_inventory": 150,
+      "avg_daily_demand": 38,
+      "forecast_daily_demand": 42,
+      "trailing_daily_actuals": [39, 41, 40, 43, 41, 40, 42]
+    },
+    {
+      "sku": "SKU-1002",
+      "name": "Instant Noodles Family Pack",
+      "category": "packaged_food",
+      "storage_units_per_item": 1.0,
+      "current_inventory": 80,
+      "avg_daily_demand": 58,
+      "forecast_daily_demand": 65,
+      "trailing_daily_actuals": [60, 63, 59, 61, 64, 62, 60]
+    },
+    {
+      "sku": "SKU-1003",
+      "name": "AA Batteries (4-pack)",
+      "category": "electronics_accessories",
+      "storage_units_per_item": 0.2,
+      "current_inventory": 200,
+      "avg_daily_demand": 30,
+      "forecast_daily_demand": 30,
+      "trailing_daily_actuals": [29, 31, 30, 76, 80, 82, 79]
+    },
+    {
+      "sku": "SKU-1004",
+      "name": "Phone Charging Cable",
+      "category": "electronics_accessories",
+      "storage_units_per_item": 0.1,
+      "current_inventory": 40,
+      "avg_daily_demand": 25,
+      "forecast_daily_demand": 25,
+      "trailing_daily_actuals": [24, 26, 25, 24, 26, 25, 24]
+    },
+    {
+      "sku": "SKU-1005",
+      "name": "Reusable Shopping Bag",
+      "category": "houseware",
+      "storage_units_per_item": 1.0,
+      "current_inventory": 120,
+      "avg_daily_demand": 20,
+      "forecast_daily_demand": 22,
+      "trailing_daily_actuals": [21, 20, 23, 21, 22, 20, 21]
+    }
+  ],
+  "suppliers": [
+    {"id": "SUP-A1", "sku": "SKU-1001", "name": "Northwind Housewares", "lead_time_days": 12, "min_order_qty": 200, "unit_price": 8.0, "reliability_score": 0.95, "available_qty": 1000},
+    {"id": "SUP-A2", "sku": "SKU-1001", "name": "Everstock Supply",     "lead_time_days": 7,  "min_order_qty": 150, "unit_price": 8.6, "reliability_score": 0.88, "available_qty": 600},
+
+    {"id": "SUP-B1", "sku": "SKU-1002", "name": "Golden Harvest Foods", "lead_time_days": 8,  "min_order_qty": 150, "unit_price": 3.0, "reliability_score": 0.90, "available_qty": 250},
+    {"id": "SUP-B2", "sku": "SKU-1002", "name": "Pacific Foodstuffs",   "lead_time_days": 5,  "min_order_qty": 100, "unit_price": 3.2, "reliability_score": 0.85, "available_qty": 400},
+
+    {"id": "SUP-C1", "sku": "SKU-1003", "name": "Voltline Batteries",   "lead_time_days": 9,  "min_order_qty": 200, "unit_price": 1.2, "reliability_score": 0.92, "available_qty": 2000},
+
+    {"id": "SUP-D1", "sku": "SKU-1004", "name": "Circuit & Cable Co.",  "lead_time_days": 10, "min_order_qty": 100, "unit_price": 5.0, "reliability_score": 0.90, "available_qty": 1000},
+
+    {"id": "SUP-E1", "sku": "SKU-1005", "name": "GreenPack Textiles",   "lead_time_days": 5,  "min_order_qty": 100, "unit_price": 4.0, "reliability_score": 0.90, "available_qty": 800}
+  ],
+  "open_purchase_orders": [
+    {"id": "PO-3001", "sku": "SKU-1001", "quantity": 100, "expected_arrival_days": 4, "status": "in_transit"},
+    {"id": "PO-4002", "sku": "SKU-1002", "quantity": 500, "expected_arrival_days": 8, "status": "pending_confirmation", "supplier_id": "SUP-B1"},
+    {"id": "PO-5001", "sku": "SKU-1003", "quantity": 150, "expected_arrival_days": 6, "status": "in_transit"}
+  ],
+  "situations": [
+    {
+      "id": "SIT-1001",
+      "scenario_type": "recommendation_review",
+      "sku": "SKU-1001",
+      "node": "DC-Mumbai-1",
+      "title": "Recommendation: order 800 units of Insulated Water Bottle 1L",
+      "description": "The purchasing system recommends ordering 800 units ahead of the next replenishment cycle.",
+      "recommended_qty": 800,
+      "budget_remaining": 50000,
+      "storage_remaining": 300,
+      "storage_drift": 40
+    },
+    {
+      "id": "SIT-1002",
+      "scenario_type": "recommendation_review",
+      "sku": "SKU-1005",
+      "node": "DC-Mumbai-1",
+      "title": "Recommendation: order 150 units of Reusable Shopping Bag",
+      "description": "The purchasing system recommends ordering 150 units ahead of the next replenishment cycle.",
+      "recommended_qty": 150,
+      "budget_remaining": 20000,
+      "storage_remaining": 1000,
+      "storage_drift": 0
+    },
+    {
+      "id": "SIT-2001",
+      "scenario_type": "supplier_shortfall",
+      "sku": "SKU-1002",
+      "node": "DC-Mumbai-1",
+      "title": "Supplier can only fulfil 250 of 500 units on PO-4002",
+      "description": "Golden Harvest Foods has confirmed only 250 of the 500 units ordered on PO-4002 can currently be supplied.",
+      "recommended_qty": 0,
+      "budget_remaining": 10000,
+      "storage_remaining": 500,
+      "storage_drift": 0,
+      "trigger_payload": {"original_po_id": "PO-4002", "original_supplier_id": "SUP-B1", "confirmed_qty": 250}
+    },
+    {
+      "id": "SIT-3001",
+      "scenario_type": "demand_change",
+      "sku": "SKU-1003",
+      "node": "DC-Mumbai-1",
+      "title": "Actual sales of AA Batteries (4-pack) have run well above forecast for 3 days",
+      "description": "Forecast assumed normal demand (~30 units/day). Actual sales over the last 3 days have been 76, 80 and 82 units/day.",
+      "recommended_qty": 0,
+      "budget_remaining": 15000,
+      "storage_remaining": 1200,
+      "storage_drift": 0
+    },
+    {
+      "id": "SIT-4001",
+      "scenario_type": "purchasing_constraint",
+      "sku": "SKU-1004",
+      "node": "DC-Mumbai-1",
+      "title": "Recommendation: order 1000 units of Phone Charging Cable",
+      "description": "The purchasing system recommends ordering 1000 units. Remaining category budget for this cycle is very low.",
+      "recommended_qty": 1000,
+      "budget_remaining": 300,
+      "storage_remaining": 2000,
+      "storage_drift": 0
+    }
+  ]
+}
