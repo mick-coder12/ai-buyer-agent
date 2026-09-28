@@ -235,3 +235,11 @@ see it for the exact numbers behind each scenario.
   concurrency itself isn't.
 - No persistence across restarts by design — every run starts from the same
   seed so the scenarios are reproducible on demand.
+
+
+## Project Structure
+
+- `backend/` - Backend services and purchasing agent logic
+- `frontend/` - Frontend interface for interacting with the agent
+- `render.yaml` - Deployment configuration
+- `Purchasing_Agent_Approach.pdf` - Project approach and design
