@@ -96,3 +96,10 @@ def test_investigate_when_spike_is_a_single_day_blip_not_sustained():
     result = policy.evaluate_purchase(ctx)
     assert result["decision"] == "investigate"
     assert result["needs_human_approval"] is True
+
+def test_recommendation_returns_expected_decision_fields():
+    result = agent.run_situation("SIT-1001")
+
+    assert "decision" in result
+    assert "quantity" in result
+    assert "status" in result
