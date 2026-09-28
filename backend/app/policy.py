@@ -1,4 +1,7 @@
-"""Deterministic decision policy. This is the part of the agent that decides
+
+"""Deterministic purchasing policy rules used by the decision engine.
+
+This is the part of the agent that decides
 what to do — kept rule-based and fully explainable (every decision returns
 the factors behind it) rather than delegated to a model call, so the same
 input always produces the same, auditable output. See README for why."""
