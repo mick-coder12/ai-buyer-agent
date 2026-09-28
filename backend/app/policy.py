@@ -39,7 +39,7 @@ def evaluate_purchase(ctx: Dict[str, Any]) -> Dict[str, Any]:
     Scenario 3, after the demand signal is re-based on actuals, and Scenario 4,
     where constraints leave no feasible quantity."""
     factors = []
-    recommended_qty = ctx.get("recommended_qty") or 0
+    recommended_qty = max(0.0, ctx.get("recommended_qty") or 0)
     baseline_rate = max(ctx["avg_daily_demand"], ctx["forecast_daily_demand"])
     trailing = ctx.get("trailing_daily_actuals") or []
     trailing_avg = mean(trailing) if trailing else baseline_rate
