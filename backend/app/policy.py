@@ -17,7 +17,7 @@ AUTO_APPROVE_COST_THRESHOLD = 5000.0
 ALT_SUPPLIER_MAX_PREMIUM = 0.10
 ACCEPT_TOLERANCE_RATIO = 0.10
 
-
+# Thresholds used to determine whether a recommendation can be approved automatically.
 def _factor(label: str, detail: str) -> Dict[str, str]:
     return {"label": label, "detail": detail}
 
